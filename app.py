@@ -1,15 +1,14 @@
-import json
 from bson import ObjectId
 import uvicorn
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-from common.helpers import generate_report
+from common.helpers import start_report_generation
 
 from common.connections import report_status_collection
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Response
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 
 from common.models import ReportStatus, ReportStatusModel
 
@@ -30,7 +29,7 @@ async def trigger_report(background_tasks: BackgroundTasks):
         report_model = ReportStatusModel()
 
         # Calling the function to generate the report in the background
-        background_tasks.add_task(generate_report, report_model.id)
+        background_tasks.add_task(start_report_generation, report_model.id)
 
         # Updating the report model in the Database
         report_status_collection.insert_one(report_model.to_database())
@@ -63,4 +62,4 @@ async def get_report(report_id: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True, workers=6)

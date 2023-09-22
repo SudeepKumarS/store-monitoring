@@ -157,7 +157,24 @@ def calculate_uptime_and_downtime(store_id):
         print(f"Error in calculate_uptime_and_downtime for store {store_id}: {e}")
         return {}
 
-async def generate_report(report_id: str):
+
+async def start_report_generation(report_id: str):
+    """
+    Function to start the report generation using threadpool executor
+    """
+    try:
+        from multiprocessing import Process
+        process = Process(target=generate_report, args=(report_id,))
+        process.start()
+    except Exception as err:
+        print(f"Failed to generate the report for ID {report_id}")
+        print(f"Error: {err}")
+        print(traceback.format_exc())
+        # Updating the status of the report in the DB
+        report_status_collection.update_one({"_id": ObjectId(report_id)}, {"$status": ReportStatus.failed})
+
+
+def generate_report(report_id: str):
     """
     Method to start the report generation and update the status of the generation
     in the database
@@ -186,10 +203,10 @@ async def generate_report(report_id: str):
             
             # Inserting the header row
             writer.writeheader()
-            
             for s_id in store_ids:
                 report_data = calculate_uptime_and_downtime(s_id)
                 if report_data:
+                    # After the completion of the processing, writing the data into csv
                     writer.writerow(report_data)
                     
         # Updating the status of the report in the DB

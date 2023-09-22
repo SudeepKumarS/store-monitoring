@@ -1,10 +1,16 @@
 import csv
-from datetime import datetime, timedelta
 import traceback
-from bson import ObjectId
-import pytz
+from datetime import datetime, timedelta
 
-from common.connections import store_activity_collection, business_hours_collection, store_timezone_collection, report_status_collection
+import pytz
+from bson import ObjectId
+
+from common.connections import (
+    business_hours_collection,
+    report_status_collection,
+    store_activity_collection,
+    store_timezone_collection,
+)
 from common.models import ReportStatus
 
 
@@ -42,7 +48,10 @@ def get_active_business_hours(store_id: str) -> dict:
             if business_hrs_obj is None:
                 start_time_local_str, end_time_local_str = "00:00:00", "23:59:59"
             else:
-                start_time_local_str, end_time_local_str = business_hrs_obj["start_time_local"], business_hrs_obj["end_time_local"]
+                start_time_local_str, end_time_local_str = (
+                    business_hrs_obj["start_time_local"],
+                    business_hrs_obj["end_time_local"],
+                )
             start_time_local = datetime.strptime(start_time_local_str, "%H:%M:%S").time()
             end_time_local = datetime.strptime(end_time_local_str, "%H:%M:%S").time()
             business_hours[(store_id, week_day)] = (start_time_local, end_time_local)
@@ -123,7 +132,11 @@ def calculate_uptime_and_downtime(store_id):
             current_time = timestamps_within_business_hours[i][0]
             next_time = timestamps_within_business_hours[i + 1][0]
             # Calculatinng based on any match of the timstamp window and active status
-            status = "active" if any(current_time <= obs["timestamp_utc"] <= next_time for obs in observations if obs[1] == "active") else "inactive"
+            status = (
+                "active"
+                if any(current_time <= obs["timestamp_utc"] <= next_time for obs in observations if obs[1] == "active")
+                else "inactive"
+            )
 
             if status == "active":
                 uptime_last_hour += (next_time - current_time).total_seconds() / 60
@@ -164,6 +177,7 @@ async def start_report_generation(report_id: str):
     """
     try:
         from multiprocessing import Process
+
         process = Process(target=generate_report, args=(report_id,))
         process.start()
     except Exception as err:
@@ -186,7 +200,6 @@ def generate_report(report_id: str):
         # Generating a CSV file with the report ID
         csv_filename = f"report_{report_id}.csv"
 
-
         csv_headers = [
             "store_id",
             "uptime_last_hour",
@@ -198,9 +211,9 @@ def generate_report(report_id: str):
         ]
 
         # Opening a CSV file to write the data
-        with open(csv_filename, mode='w', newline='') as csv_file:
+        with open(csv_filename, mode="w", newline="") as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
-            
+
             # Inserting the header row
             writer.writeheader()
             for s_id in store_ids:
@@ -208,7 +221,7 @@ def generate_report(report_id: str):
                 if report_data:
                     # After the completion of the processing, writing the data into csv
                     writer.writerow(report_data)
-                    
+
         # Updating the status of the report in the DB
         report_status_collection.update_one({"_id": ObjectId(report_id)}, {"$set": {"status": ReportStatus.completed}})
     except Exception as err:

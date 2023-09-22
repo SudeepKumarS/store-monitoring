@@ -1,19 +1,14 @@
-from bson import ObjectId
 import uvicorn
-
-from fastapi import FastAPI, HTTPException
+from bson import ObjectId
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-from common.helpers import start_report_generation
-
 from common.connections import report_status_collection
-
-from fastapi import FastAPI, BackgroundTasks, HTTPException
-
+from common.helpers import start_report_generation
 from common.models import ReportStatus, ReportStatusModel
 
-
 app = FastAPI()
+
 
 # Endpoint for the root page
 @app.get("/")
@@ -47,7 +42,7 @@ async def get_report(report_id: str):
 
         if report_bson is None:
             return HTTPException(status_code=404, detail="Report with this ID is not found")
-        
+
         report_model = ReportStatusModel.from_database(report_bson)
 
         if report_model.status == ReportStatus.completed.value:
@@ -55,7 +50,7 @@ async def get_report(report_id: str):
             filename = f"report_{report_id}.csv"
 
             return FileResponse(filename, media_type="text/csv")
-        
+
         return report_model.model_dump()
     except Exception as err:
         return HTTPException(status_code=500, detail=f"Internal Server Error: {err}")

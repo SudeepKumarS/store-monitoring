@@ -1,8 +1,9 @@
-from typing import Optional
-from bson import ObjectId
-from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
+from typing import Optional
+
+from bson import ObjectId
+from pydantic import BaseModel, Field
 
 
 # Model for Mongo DB
@@ -61,7 +62,7 @@ class BusinessHoursModel(MongoBaseModel):
         except Exception:
             print(data)
         return cls(*args, **data, **kwargs)
-    
+
 
 class StoreTimezonesModel(MongoBaseModel):
     store_id: int

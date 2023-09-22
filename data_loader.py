@@ -1,9 +1,11 @@
-import os
 import csv
-
+import os
 from datetime import datetime, timedelta
+
 from dotenv import load_dotenv
-from pymongo import MongoClient, collection as pymongo_collection
+from pymongo import MongoClient
+from pymongo import collection as pymongo_collection
+
 from common.models import BusinessHoursModel, MongoBaseModel, StoreActivityModel, StoreTimezonesModel
 
 # Loading the environment variables from .env file
@@ -31,7 +33,7 @@ def load_csv_data_to_mongodb(collection: pymongo_collection.Collection, csv_path
     """
     try:
         # Opening the CSV file and reading data
-        with open(csv_path, 'r') as file:
+        with open(csv_path, "r") as file:
             csv_reader = csv.DictReader(file)
             data = list(csv_reader)
 
@@ -73,6 +75,7 @@ collections_map = {
 
 if __name__ == "__main__":
     import time
+
     start = time.time()
     for col in collections_map:
         load_csv_data_to_mongodb(col, collections_map[col][0], collections_map[col][1])

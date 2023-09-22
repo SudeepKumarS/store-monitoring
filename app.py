@@ -49,7 +49,7 @@ async def get_report(report_id: str):
             # The csv file is stored in the current directory
             filename = f"report_{report_id}.csv"
 
-            return FileResponse(filename, media_type="text/csv")
+            return FileResponse(path=filename, filename=filename, media_type="text/csv")
 
         return report_model.model_dump()
     except Exception as err:
